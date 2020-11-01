@@ -1,0 +1,159 @@
+import java.text.SimpleDateFormat
+
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-android-extensions'
+    id "kotlin-kapt"
+//    id 'koin'
+}
+
+ext {
+    room_version = '2.2.2'
+    retrofit_version = '2.5.0'
+    app_name = 'mvp_sample'
+
+    //test
+    prod_api_url = "\"https://api.openweathermap.org/data/2.5/\""
+    //prod
+    test_api_url = "\"https://api.openweathermap.org/data/2.5/\""
+}
+
+
+
+static def buildTime() {
+    def df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm")
+    df.setTimeZone(TimeZone.getTimeZone("UTC"))
+    return df.format(new Date())
+}
+
+android {
+    compileSdkVersion 30
+    buildToolsVersion "30.0.2"
+
+    defaultConfig {
+        applicationId "com.kadmiv.mvp_sample"
+        minSdkVersion 16
+        targetSdkVersion 30
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+//            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig getSigningConfig()
+
+            buildConfigField "String", "API_URL", "$prod_api_url" //Ссылка на работу с апишкой
+
+            android.applicationVariants.all { variant ->
+                variant.outputs.all {
+                    outputFileName = "${app_name}_v${variant.versionName}_c${variant.versionCode}_release.apk"
+                }
+            }
+
+        }
+        debug {
+            minifyEnabled false
+//            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig getSigningConfig()
+
+            buildConfigField "String", "API_URL", "$test_api_url"//Ссылка на работу с апишкой
+
+            android.applicationVariants.all { variant ->
+                variant.outputs.all {
+                    outputFileName = "${app_name}_v${variant.versionName}_c${variant.versionCode}_test.apk"
+                }
+            }
+
+        }
+
+        // it finalizes :bundleDebug
+        task finalizeBundleDebug(type: Copy) {
+            def path = "${buildDir}/outputs/bundle/debug/"
+            from(path)
+            include "app.aab"
+            destinationDir file(path)
+            rename "app.aab", "${app_name}_${buildTime()}_debug.aab"
+        }
+
+// it finalizes :bundleRelease
+        task finalizeBundleRelease(type: Copy) {
+            def path = "${buildDir}/outputs/bundle/release/"
+            from(path)
+            include "app.aab"
+            destinationDir file(path)
+            rename "app.aab", "${app_name}_${buildTime()}_release.aab"
+        }
+
+// this adds the above two tasks
+        tasks.whenTaskAdded { task ->
+            if (task.name == "bundleDebug") {
+                task.finalizedBy finalizeBundleDebug
+            } else if (task.name == "bundleRelease") {
+                task.finalizedBy finalizeBundleRelease
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation 'androidx.core:core-ktx:1.3.2'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.3'
+
+    //Multidex
+    implementation 'androidx.multidex:multidex:2.0.1'
+
+    // Room components
+    implementation "androidx.room:room-runtime:2.2.5"
+    kapt "androidx.room:room-compiler:${room_version}"
+    implementation "androidx.room:room-rxjava2:2.2.5"
+
+    // RX
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.9'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.0'
+    implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
+
+    // REST
+    implementation 'com.squareup.retrofit2:retrofit:2.6.2'
+    implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
+    implementation 'com.squareup.retrofit2:converter-jackson:2.6.2'
+    implementation 'com.squareup.retrofit2:retrofit-converters:2.6.2'
+
+//    implementation group: 'org.koin', name: 'koin-core', version: '3.0.0-alpha-1', ext: 'pom'
+//    // Koin for Android
+//    implementation "org.koin:koin-android:3.0.0-alpha-1"
+//    // or Koin for view model features
+//    implementation "org.koin:koin-android-viewmodel:3.0.0-alpha-1"
+    implementation "org.koin:koin-android:1.0.2"
+    implementation "org.koin:koin-android-viewmodel:1.0.2"
+
+    // For Easy Permissions lib
+    implementation 'com.karumi:dexter:5.0.0'
+
+    //For logging
+    implementation 'org.slf4j:slf4j-api:1.7.30'
+    implementation 'com.github.tony19:logback-android:2.0.0'
+
+    //For tests
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+}

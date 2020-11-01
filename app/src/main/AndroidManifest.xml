@@ -3,6 +3,7 @@
     package="com.kadmiv.mvp_sample">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -11,6 +12,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MVP_Sample">
+        <service
+            android:name=".app.services.EmptyService"
+            android:enabled="true"
+            android:exported="true"></service>
+
+        <receiver
+            android:name=".app.receivers.EmptyReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
         <activity android:name=".app.ui.main_page.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
